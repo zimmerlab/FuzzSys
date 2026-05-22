@@ -1,15 +1,22 @@
-import os
-os.environ["OMP_NUM_THREADS"] = "8"
-os.environ["MKL_NUM_THREADS"] = "8"
-os.environ["OPENBLAS_NUM_THREADS"] = "8"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "8"
-os.environ["NUMEXPR_NUM_THREADS"] = "8"
-
 import warnings
 warnings.simplefilter (action = "ignore", category = FutureWarning)
 
-import json
 import argparse
+parser = argparse.ArgumentParser ()
+parser.add_argument ("--mtx", type = str, required = True, help = "Raw value matrix (TSV or H5AD)")
+parser.add_argument ("--config", type = str, required = True, help = "Config file for detailed parameters (JSON)")
+parser.add_argument ("--threads", type = str, required = False, default = "1", help = "Number of threads for fitting")
+parser.add_argument ("--output", type = str, required = True, help = "Output directory for constraints and detailed fuzzy concepts")
+args = parser.parse_args ()
+
+import os
+os.environ["OMP_NUM_THREADS"] = args.threads
+os.environ["MKL_NUM_THREADS"] = args.threads
+os.environ["OPENBLAS_NUM_THREADS"] = args.threads
+os.environ["VECLIB_MAXIMUM_THREADS"] = args.threads
+os.environ["NUMEXPR_NUM_THREADS"] = args.threads
+
+import json
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -18,12 +25,6 @@ from helper_cmd import getConcept, getPercentage, getSubarea
 
 # python main_concepts.py --mtx rawValueMatrix --config config --output outputDirectory
 
-
-parser = argparse.ArgumentParser ()
-parser.add_argument ("--mtx", type = str, required = True, help = "Raw value matrix (TSV or H5AD)")
-parser.add_argument ("--config", type = str, required = True, help = "Config file for detailed parameters (JSON)")
-parser.add_argument ("--output", type = str, required = True, help = "Output directory for constraints and detailed fuzzy concepts")
-args = parser.parse_args ()
 
 with open (args.config) as f:
     config = json.load (f); f.close ()
