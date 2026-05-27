@@ -23,7 +23,7 @@ import scanpy as sc
 import matplotlib.colors as mcolors
 from helper_cmd import getConcept, getPercentage, getSubarea
 
-# python main_concepts.py --mtx rawValueMatrix --config config --output outputDirectory
+# python main_concepts.py --mtx rawValueMatrix --config config --threads numThreads --output outputDirectory
 
 
 with open (args.config) as f:
@@ -88,9 +88,7 @@ if args.mtx.lower ().endswith ("tsv"):
     with open (args.mtx) as f:
         samples = f.readline ().strip ("\n").split ("\t")[1:]
         features = [line.strip ("\n").split ("\t")[0] for line in f.readlines ()]
-    with open (args.mtx) as f:
-        values = [[np.nan if x in ["", "NA"] else float (x) for x in line.strip ("\n").split ("\t")[1:]] for line in f.readlines ()[1:]]
-    values = pd.Series (sum (values, list ())).round (5)
+    values = pd.read_csv (args.mtx, index_col = 0, sep = "\t").melt ()["value"].round (5)
 elif args.mtx.lower ().endswith ("h5ad"):
     if direction == "feature":
         adata = sc.read_h5ad (args.mtx).T; features = list (adata.obs_names); samples = list (adata.var_names)

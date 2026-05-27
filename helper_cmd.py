@@ -1,3 +1,7 @@
+import warnings
+from scipy.optimize import OptimizeWarning
+warnings.simplefilter ("error", OptimizeWarning)
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -39,7 +43,7 @@ def _fitMode (values, bwFct = 1, useFit = True, useOptimize = False):
                 res, _ = optimize.curve_fit (lambda x, m, s: stats.norm.pdf (x, loc = m, scale = s), density["value"], density["density"],
                                              bounds = [(lb, -np.inf), (ub, np.inf)])
                 mu = res[0]; sigma = res[1]
-            except RuntimeError:
+            except (RuntimeError, OptimizeWarning):
                 mu = modes.iloc[modeIdx, 0]
                 sigma1 = finite_values[finite_values < mu].std (); sigma1 = 0 if np.isnan (sigma1) else sigma1
                 sigma2 = finite_values[finite_values > mu].std (); sigma2 = 0 if np.isnan (sigma2) else sigma2
@@ -90,7 +94,10 @@ def _getIntersection (concept):
                 coord = values.loc[0, "x"]
             else:
                 i = (diff < 0).sum () if diff[0] < 0 else (diff > 0).sum ()
-                coord = values.loc[[i - 1, i], "x"].mean ()
+                try:
+                    coord = values.loc[[i - 1, i], "x"].mean ()
+                except KeyError:
+                    coord = values.loc[i - 1, "x"]
         intersection.append (coord)
     return intersection
 

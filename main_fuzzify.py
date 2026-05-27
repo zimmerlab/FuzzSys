@@ -92,10 +92,7 @@ if deriveConcepts:
                 consValue |= {params[0]}
     basicInfo = {"number_fuzzy_sets": numFS, "label_values": labels}
     if args.mtx.lower ().endswith ("tsv"):
-        with open (args.mtx) as f:
-            values = [[np.nan if x in ["", "NA"] else float (x) for x in line.strip ("\n").split ("\t")[1:]]
-                      for line in f.readlines ()[1:]]
-        values = pd.Series (sum (values, list ())).round (5)
+        values = pd.read_csv (args.mtx, index_col = 0, sep = "\t").melt ()["value"].round (5)
     if args.mtx.lower ().endswith ("h5ad"):
         values = pd.Series (np.array (adata[adata.obs_names].X.data).reshape ((1, -1))[0]).round (5)
     default = getConcept (values, "constraint", consType, basicInfo, numFS, renameFS, labels,
