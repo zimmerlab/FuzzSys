@@ -24,7 +24,7 @@ import scanpy as sc
 import matplotlib.pyplot as plt
 from helper_cmd import getConcept, parseConcept, fuzzify, getReport, getClusterMap
 
-# python main_fuzzifier.py --mtx rawValueMatrix --concept fuzzyConcepts --config config --output outputDirectory
+# python main_fuzzifier.py --mtx rawValueMatrix --concept fuzzyConcepts --config config --threads numThreads --output outputDirectory
 
 
 with open (args.concept) as f:
@@ -41,14 +41,16 @@ scaleSum = config.get ("force_sum_one", True); renameLabels = config.get ("renam
 renameLabels = {const.get (val.lower ()): renameLabels[val] for val in renameLabels.keys () if isinstance (val, str)}
 if (noMinNoise and (not noMaxNoise)) or ((not noMinNoise) and noMaxNoise):
     renameLabels["MIN-NOISE"] = "NOISE"; renameLabels["MAX-NOISE"] = "NOISE"
+onlyAverage = config.get ("only_output_average", False)
 generateEval = config.get ("generate_evaluation", False); generatePlots = config.get ("generate_report_plots", False)
 
 with open (args.concept) as f:
     concepts = json.load (f)
 
 outputFV = args.output; os.makedirs (outputFV, exist_ok = True)
-if generateEval or generatePlots:
+if not onlyAverage:
     outputFV = os.path.join (args.output, "fuzzy_values"); os.makedirs (outputFV, exist_ok = True)
+if generateEval or generatePlots:
     if generateEval:
         outputEval = os.path.join (args.output, "evaluations"); os.makedirs (outputEval, exist_ok = True)
     if generatePlots:
@@ -63,7 +65,7 @@ elif args.mtx.lower ().endswith ("h5ad"):
     if direction == "sample":
         adata = sc.read_h5ad (args.mtx); features = list (adata.var_names); samples = list (adata.obs_names)
     else:
-        adata = sc.read_h5ad (args.mtx).T; features = list (adata.obs_name); samples = list (adata.var_names)
+        adata = sc.read_h5ad (args.mtx).T; features = list (adata.obs_names); samples = list (adata.var_names)
 else:
     raise TypeError
 
@@ -94,7 +96,7 @@ if deriveConcepts:
     if args.mtx.lower ().endswith ("tsv"):
         values = pd.read_csv (args.mtx, index_col = 0, sep = "\t").melt ()["value"].round (5)
     if args.mtx.lower ().endswith ("h5ad"):
-        values = pd.Series (np.array (adata[adata.obs_names].X.data).reshape ((1, -1))[0]).round (5)
+        values = pd.Series (np.array (adata[adata.obs_names].X.data)).astype (float).round (5)
     default = getConcept (values, "constraint", consType, basicInfo, numFS, renameFS, labels,
                           minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                           refConcept = concept_cons, consValue = consValue,
@@ -105,6 +107,8 @@ else:
     default = parseConcept (concepts.get (defaultName, dict ()))
 
 summary = dict (); expectation = dict (); observation = dict ()
+if onlyAverage:
+    averageFV = dict ()
 if direction == "sample":
     maxSplit = 2
     for sample in samples:
@@ -118,7 +122,7 @@ if direction == "sample":
                                         index = features)
             values[values == ""] = np.nan; values = values.astype (float).round (5); maxSplit += 1
         else:
-            values = adata[sample].to_df ().loc[sample].round (5)
+            values = adata[sample].to_df ().loc[sample].astype (float).round (5)
         if deriveConcepts:
             concept = getConcept (values, "constraint", consType, basicInfo, numFS, renameFS, labels,
                                   minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
@@ -142,7 +146,10 @@ if direction == "sample":
             expectation[sample] = exp.round (5); observation[sample] = obs.round (5)
             summary[sample] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
         if not memberships.empty:
-            memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{sample}.tsv"), sep = "\t")
+            if onlyAverage:
+                averageFV[sample] = memberships.mean (axis = 0).round (3)
+            else:
+                memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{sample}.tsv"), sep = "\t")
             if generatePlots:
                 getReport (values, concept, exp, obs, title = sample, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
                            outputPath = os.path.join (outputReport, f"report_{sample}.png"))
@@ -179,13 +186,16 @@ else:
                     expectation[feature] = exp.round (5); observation[feature] = obs.round (5)
                     summary[feature] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
                 if not memberships.empty:
-                    memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{feature}.tsv"), sep = "\t")
+                    if onlyAverage:
+                        averageFV[feature] = memberships.mean (axis = 0).round (3)
+                    else:
+                        memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{feature}.tsv"), sep = "\t")
                     if generatePlots:
                         getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
                                    outputPath = os.path.join (outputReport, f"report_{feature}.png"))
     if args.mtx.lower ().endswith ("h5ad"):
         for feature in features:
-            values = adata[feature].to_df ().loc[feature].round (5)
+            values = adata[feature].to_df ().loc[feature].astype (float).round (5)
             if direction == "feature":
                 if deriveConcepts:
                     concept = getConcept (values, "constraint", consType, basicInfo, numFS, renameFS, labels,
@@ -200,7 +210,7 @@ else:
                 else:
                     concept = concepts.get (feature, {"number_fuzzy_sets": 0}).copy ()
                     if concept["number_fuzzy_sets"] == 0:
-                        concept = default.coyp (); isFitted = False
+                        concept = default.copy (); isFitted = False
                     else:
                         concept = parseConcept (concept); isFitted = True
             else:
@@ -212,10 +222,16 @@ else:
                 expectation[feature] = exp.round (5); observation[feature] = obs.round (5)
                 summary[feature] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
             if not memberships.empty:
-                memberships.round (3).to_csv (os.path.join (args.output, "fuzzy_values", f"fuzzyValues_{feature}.tsv"), sep = "\t")
+                if onlyAverage:
+                    averageFV[feature] = memberships.mean (axis = 0).round (3)
+                else:
+                    memberships.round (3).to_csv (os.path.join (args.output, "fuzzy_values", f"fuzzyValues_{feature}.tsv"), sep = "\t")
                 if generatePlots:
                     getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
                                outputPath = os.path.join (args.output, "reports", f"report_{feature}.png"))
+if onlyAverage:
+    averageFV = pd.DataFrame.from_dict (averageFV, orient = "index")
+    averageFV.to_csv (os.path.join (outputFV, "average_fuzzy_values.tsv"), sep = "\t")
 
 if generateEval:
     expectation = pd.DataFrame (expectation).T; expectation.to_csv (os.path.join (outputEval, "expected_percentage.tsv"), sep = "\t")

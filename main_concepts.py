@@ -94,7 +94,7 @@ elif args.mtx.lower ().endswith ("h5ad"):
         adata = sc.read_h5ad (args.mtx).T; features = list (adata.obs_names); samples = list (adata.var_names)
     else:
         adata = sc.read_h5ad (args.mtx); features = list (adata.var_names); samples = list (adata.obs_names)
-    values = pd.Series (np.array (adata[adata.obs_names].X.data).reshape ((1, -1))[0]).round (5)
+    values = pd.Series (np.array (adata[adata.obs_names].X.data)).astype (float).round (5)
 else:
     raise TypeError
 
@@ -135,7 +135,7 @@ if direction == "feature":
                                                        widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
     if args.mtx.lower ().endswith ("h5ad"):
         for feature in features:
-            values = pd.Series (np.array (adata[feature].X.data)[0]).round (5)
+            values = pd.Series (np.array (adata[feature].X.data)).astype (float).round (5)
             detailedConcept[feature] = getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                                                    minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                    useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
@@ -161,13 +161,13 @@ elif direction == "sample":
     if args.mtx.lower ().endswith ("h5ad"):
         maxSplit = 2
         for sample in samples:
-            values = pd.Series (np.array (adata[sample].X.data)[0]).round (5)
+            values = pd.Series (np.array (adata[sample].X.data)).astype (float).round (5)
             detailedConcept[sample] = getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                                                   minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                   useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                   refConcept = concept_cons, consValue = consValue,
                                                   widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
-    
+
     
 if not os.path.exists (args.output):
     os.makedirs (args.output, exist_ok = True)
