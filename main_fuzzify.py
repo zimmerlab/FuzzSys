@@ -166,11 +166,10 @@ else:
                                               minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                               refConcept = concept_cons, consValue = consValue,
                                               useFit = useFit, useOptimize = useOptimize, bwFct = bwFct)
+                        outputConcept = concept.copy (); outputConcept["label_values"] = outputLabels; isFitted = True
                         if concept["number_fuzzy_sets"] == 0:
                             concept = default.copy (); isFitted = False
-                        else:
-                            outputConcept = concept.copy (); outputConcept["label_values"] = outputLabels
-                            allConcepts[feature] = outputConcept; isFitted = True
+                        allConcepts[feature] = outputConcept
                     else:
                         concept = concepts.get (feature, {"number_fuzzy_sets": 0}).copy ()
                         if concept["number_fuzzy_sets"] == 0:
@@ -202,11 +201,10 @@ else:
                                           minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                           refConcept = concept_cons, consValue = consValue,
                                           useFit = useFit, useOptimize = useOptimize, bwFct = bwFct)
+                    outputConcept = concept.copy (); outputConcept["label_values"] = outputLabels; isFitted = True
                     if concept["number_fuzzy_sets"] == 0:
                         concept = default.copy (); isFitted = False
-                    else:
-                        outputConcept = concept.copy (); outputConcept["label_values"] = outputLabels
-                        allConcepts[feature] = outputConcept; isFitted = True
+                    allConcepts[feature] = outputConcept; isFitted = True
                 else:
                     concept = concepts.get (feature, {"number_fuzzy_sets": 0}).copy ()
                     if concept["number_fuzzy_sets"] == 0:

@@ -186,6 +186,8 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                     percent = getSubarea (mu, sigma, concept, minLevel = minLevel, maxLevel = maxLevel)
                     for idx in range (numFS):
                         info[renameFS[idx]] = [concept[idx], typeFS[idx], colorList[idx], round (percent[idx], 5)]
+                else:
+                    info["number_fuzzy_sets"] = 0
             else:
                 info["number_fuzzy_sets"] = 0
         elif method == "default":
@@ -297,7 +299,7 @@ def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False,
 
 def _getLines (params, cutoffs, colors):
     lines = list (); curves = list (); numFuzzySets = len (params)
-    if cutoffs[0] >= cutoffs[1]:
+    if cutoffs[0] >= cutoffs[1] or (~np.isfinite (cutoffs[0])) or (~np.isfinite (cutoffs[1])):
         return lines, curves
     if len (colors) == 0:
         colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
@@ -352,7 +354,8 @@ def getReport (values, concept, expectation, observation, title = "", ignoreMinN
                outputPath = "report.png"):
     cutoff = 0.1; plotCutoff = 0.01 if cutoff == 0 else cutoff
     masked = values.replace (concept.get ("label_values", list ()) + [-np.inf, np.inf], np.nan).dropna ()
-    minimum = np.floor (masked.min ()); maximum = np.ceil (masked.max ())
+    minimum = np.floor (masked.min ()); minimum = -np.inf if masked.empty else minimum
+    maximum = np.ceil (masked.max ()); maximum = np.inf if masked.empty else maximum
     minLevel = -np.inf if ignoreMinNoise else concept.get ("MIN-NOISE", -np.inf)
     maxLevel = np.inf if ignoreMaxNoise else concept.get ("MAX-NOISE", np.inf)
     names = list (); params = list (); colors = list ()
@@ -366,7 +369,8 @@ def getReport (values, concept, expectation, observation, title = "", ignoreMinN
     pltData = annData.copy (); pltData.loc[["observation", "expectation"]] = 0
     fig = plt.figure (figsize = (8, 6), layout = "constrained"); gs = fig.add_gridspec (2, 3)
     ax = fig.add_subplot (gs[0, :3])
-    ax.hist (masked, bins = 25, color = "silver"); ax.set_xlim ((minimum, maximum))
+    if not masked.empty:
+        ax.hist (masked, bins = 25, color = "silver"); ax.set_xlim ((minimum, maximum))
     if minLevel > minimum:
         ax.axvline (minLevel, color = "black", linestyle = "dashed")
     if maxLevel < maximum:
@@ -397,9 +401,9 @@ def getReport (values, concept, expectation, observation, title = "", ignoreMinN
 def getClusterMap (df, palette, axisLabel, center = None, title = "", outputPath = "clustermap.png"):
     try:
         if center is None:
-            g = sns.clustermap (df, dendrogram_ratio = (0.2, 0.1), cmap = palette, yticklabels = False, figsize = (5, 6))
+            g = sns.clustermap (df.dropna (), dendrogram_ratio = (0.2, 0.1), cmap = palette, yticklabels = False, figsize = (5, 6))
         else:
-            g = sns.clustermap (df, dendrogram_ratio = (0.2, 0.1), cmap = palette, center = center, yticklabels = False, figsize = (5, 6))
+            g = sns.clustermap (df.dropna (), dendrogram_ratio = (0.2, 0.1), cmap = palette, center = center, yticklabels = False, figsize = (5, 6))
     except RecursionError:
         return
     g.ax_heatmap.set_xticklabels (g.ax_heatmap.get_xticklabels (), size = 9, rotation = 0, ha = "center")
