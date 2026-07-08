@@ -51,7 +51,7 @@ if method == "constraint":
         consValue = set ()
         for idx in range (numFS):
             if len (concept_cons[idx]) == 4:
-                consValue |= concept_cons[idx]
+                consValue |= set (concept_cons[idx])
             elif len (concept_cons[idx]) == 2:
                 consValue |= {concept_cons[idx][0]}
             else:
