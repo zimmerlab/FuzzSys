@@ -213,22 +213,23 @@ def parseConcept (concept):
              "+infinity": np.inf, "+inf": np.inf, "infinity": np.inf, "inf": np.inf,
              "nan": np.nan, "na": np.nan, "zero": 0}
     newConcept = concept.copy ()
-    newConcept["MIN-NOISE"] = concept.get ("MIN-NOISE", -np.inf); newConcept["MAX-NOISE"] = concept.get ("MAX-NOISE", np.inf)
-    newConcept["MIN-NOISE"] = const.get (concept["MIN-NOISE"].lower (), -np.inf) if isinstance (concept["MIN-NOISE"], str) else concept["MIN-NOISE"]
-    newConcept["MAX-NOISE"] = const.get (concept["MAX-NOISE"].lower (), np.inf) if isinstance (concept["MAX-NOISE"], str) else concept["MAX-NOISE"]
-    newConcept["label_values"] = [const.get (x.lower ()) if isinstance (x, str) else x for x in concept.get ("label_values", list ())]
+    minLevel = concept.get ("MIN-NOISE", -np.inf); maxLevel = concept.get ("MAX-NOISE", np.inf)
+    newConcept["MIN-NOISE"] = const.get (minLevel.lower (), -np.inf) if isinstance (minLevel, str) else minLevel
+    newConcept["MAX-NOISE"] = const.get (maxLevel.lower (), np.inf) if isinstance (maxLevel, str) else maxLevel
+    newConcept["label_values"] = [const.get (x.lower ()) if isinstance (x, str) else x
+                                  for x in concept.get ("label_values", list ())]
     return newConcept
 
 
 
 def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False, ignoreMaxNoise = False, scaleSum = True):
     if not concept:
-        return pd.DataFrame (dtype = float), pd.DataFrame (dtype = float), np.nan
+        return pd.DataFrame (dtype = float), pd.Series (dtype = float), pd.Series (dtype = float), np.nan
     numFS = concept["number_fuzzy_sets"]; labels = concept.get ("label_values", list ())
     minLevel = -np.inf if ignoreMinNoise else concept.get ("MIN-NOISE", -np.inf)
     maxLevel = np.inf if ignoreMaxNoise else concept.get ("MAX-NOISE", np.inf)
     if numFS == 0:
-        return pd.DataFrame (dtype = float), pd.DataFrame (dtype = float), np.nan
+        return pd.DataFrame (dtype = float), pd.Series (dtype = float), pd.Series (dtype = float), np.nan
     masked = rawValues.replace (labels, np.nan).to_numpy ()
     memberships = pd.DataFrame (index = rawValues.index, dtype = float); expectation = pd.Series (dtype = float)
     for key in concept.keys ():
@@ -308,6 +309,10 @@ def _getLines (params, cutoffs, colors):
                   "brown", "pink", "gray", "olive", "cyan"]
     for idx in range (numFuzzySets):
         p = params[idx]
+        if idx == 0:
+            p[0] = min (p[0], cutoffs[0]); p[1] = min (p[0], cutoffs[0])
+        if idx == numFuzzySets - 1:
+            p[2] = max (p[3], cutoffs[1]); p[3] = max (p[3], cutoffs[1])
         if len (p) == 2:
             if p[1] > 0:
                 xValues = np.linspace (*cutoffs, 1000)
@@ -350,12 +355,15 @@ def _getLines (params, cutoffs, colors):
 
 
 
-def getReport (values, concept, expectation, observation, title = "", ignoreMinNoise = False, ignoreMaxNoise = False,
-               outputPath = "report.png"):
-    cutoff = 0.1; plotCutoff = 0.01 if cutoff == 0 else cutoff
+def getReport (values, concept, expectation, observation, title = "", xlim = list (), cutoff = 0.1,
+               ignoreMinNoise = False, ignoreMaxNoise = False, outputPath = "report.png"):
+    plotCutoff = 0.01 if cutoff == 0 else cutoff
     masked = values.replace (concept.get ("label_values", list ()) + [-np.inf, np.inf], np.nan).dropna ()
-    minimum = np.floor (masked.min ()); minimum = -np.inf if masked.empty else minimum
-    maximum = np.ceil (masked.max ()); maximum = np.inf if masked.empty else maximum
+    if len (xlim) == 2 and xlim[0] < xlim[1] and np.isfinite (xlim[0]) and np.isfinite (xlim[1]):
+        minimum = xlim[0]; maximum = xlim[1]
+    else:
+        minimum = np.floor (masked.min ()); minimum = -np.inf if masked.empty else minimum
+        maximum = np.ceil (masked.max ()); maximum = np.inf if masked.empty else maximum
     minLevel = -np.inf if ignoreMinNoise else concept.get ("MIN-NOISE", -np.inf)
     maxLevel = np.inf if ignoreMaxNoise else concept.get ("MAX-NOISE", np.inf)
     names = list (); params = list (); colors = list ()
@@ -367,7 +375,7 @@ def getReport (values, concept, expectation, observation, title = "", ignoreMinN
     handles = [Line2D ([0], [0], color = c, linewidth = 2) for c in colors]
     annData = pd.DataFrame ({"observation": observation, "expectation": expectation, "deviation": observation - expectation}).T
     pltData = annData.copy (); pltData.loc[["observation", "expectation"]] = 0
-    fig = plt.figure (figsize = (8, 6), layout = "constrained"); gs = fig.add_gridspec (2, 3)
+    fig = plt.figure (figsize = (8, 6)); gs = fig.add_gridspec (2, 3)
     ax = fig.add_subplot (gs[0, :3])
     if not masked.empty:
         ax.hist (masked, bins = 25, color = "silver"); ax.set_xlim ((minimum, maximum))
@@ -389,12 +397,15 @@ def getReport (values, concept, expectation, observation, title = "", ignoreMinN
     ax.set_xticks (ax.get_xticks ()); ax.set_xticklabels (ax.get_xticklabels (), rotation = 0, ha = "center"); ax.xaxis.tick_bottom ()
     ax.set_yticks (ax.get_yticks ()); ax.set_yticklabels (ax.get_yticklabels (), rotation = 0, ha = "right"); ax.yaxis.tick_left ()
     ax.set_xlabel (""); ax.set_ylabel ("observation - expectation", size = 10); ax.yaxis.set_label_position ("right")
-    ax.set_title ("categorial Gaussian test", size = 12)
     colorbar = ax.collections[0].colorbar; colorbar.set_ticks ([-2 * plotCutoff, -plotCutoff, 0, plotCutoff, 2 * plotCutoff])
     colorbar.set_ticklabels (["not\naccepted", f"{-cutoff:.1%}", "accepted", f"{cutoff:.1%}", "not\naccepted"], size = 9)
     if title != "":
         fig.suptitle (title, size = 15)
-    plt.savefig (outputPath); plt.close ()
+    fig.tight_layout ()
+    if outputPath == "":
+        return fig
+    else:
+        plt.savefig (outputPath); plt.close ()
 
 
 
