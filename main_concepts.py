@@ -109,15 +109,21 @@ outputLabels = [constRev.get (x, x) if not np.isnan (x) else "NA" for x in label
 typeFS_dict = {2: "Gaussian", 4: "trapezoidal"}
 constraint = {"value_type": consType, "number_fuzzy_sets": numFS, "label_values": outputLabels,
               "fit_Gaussian_curve": useFit, "use_scipy_optimization": useOptimize, "band_width_factor": bwFct}
+if method == "constraint" and consType == "fixed":
+    minLevel = max (minLevelCons, -np.inf if minLevelPct == 0 else values.mask (~np.isfinite (values)).quantile (minLevelPct))
+    maxLevel = min (maxLevelCons, np.inf if maxLevelPct == 1 else values.mask (~np.isfinite (values)).quantile (minLevelPct))
+    percentage = getPercentage (values, concept_cons, labels = labels, minLevel = minLevel, maxLevel = maxLevel)
 for idx in range (numFS):
-    constraint[renameFS[idx]] = [concept_cons[idx], typeFS_dict[len (concept_cons[idx])], colorList[idx], round (percentage[idx], 5)]
+    constraint[renameFS[idx]] = [concept_cons[idx], typeFS_dict[len (concept_cons[idx])],
+                                 colorList[idx], round (percentage[idx], 5)]
 
 basicInfo = {"number_fuzzy_sets": numFS, "label_values": outputLabels}
 default = getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                       minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                       useFit = False, useOptimize = False, bwFct = bwFct,
                       refConcept = concept_cons, consValue = consValue,
-                      widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
+                      widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
+                      globalExp = percentage)
 del values
 
 detailedConcept = {defaultName: default}
@@ -132,7 +138,8 @@ if direction == "feature":
                                                        minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                        useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                        refConcept = concept_cons, consValue = consValue,
-                                                       widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
+                                                       widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
+                                                       globalExp = percentage)
     if args.mtx.lower ().endswith ("h5ad"):
         for feature in features:
             values = pd.Series (np.array (adata[feature].X.data)).astype (float).round (5)
@@ -140,7 +147,8 @@ if direction == "feature":
                                                    minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                    useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                    refConcept = concept_cons, consValue = consValue,
-                                                   widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
+                                                   widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
+                                                   globalExp = percentage)
 elif direction == "sample":
     if args.mtx.lower ().endswith ("tsv"):
         maxSplit = 2
@@ -157,7 +165,8 @@ elif direction == "sample":
                                                   minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                   useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                   refConcept = concept_cons, consValue = consValue,
-                                                  widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
+                                                  widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
+                                                  globaleExp = percentage)
     if args.mtx.lower ().endswith ("h5ad"):
         maxSplit = 2
         for sample in samples:
@@ -166,7 +175,8 @@ elif direction == "sample":
                                                   minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                   useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                   refConcept = concept_cons, consValue = consValue,
-                                                  widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx)
+                                                  widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
+                                                  globalExp = percentage)
 
     
 if not os.path.exists (args.output):

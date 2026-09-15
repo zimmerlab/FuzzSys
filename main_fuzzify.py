@@ -43,6 +43,7 @@ if (noMinNoise and (not noMaxNoise)) or ((not noMinNoise) and noMaxNoise):
     renameLabels["MIN-NOISE"] = "NOISE"; renameLabels["MAX-NOISE"] = "NOISE"
 onlyAverage = config.get ("only_output_average", False)
 generateEval = config.get ("generate_evaluation", False); generatePlots = config.get ("generate_report_plots", False)
+diffCutoff = config.get ("report_deviation_cutoff", 1)
 
 with open (args.concept) as f:
     concepts = json.load (f)
@@ -151,8 +152,9 @@ if direction == "sample":
             else:
                 memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{sample}.tsv"), sep = "\t")
             if generatePlots:
-                getReport (values, concept, exp, obs, title = sample, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                           outputPath = os.path.join (outputReport, f"report_{sample}.png"))
+                if max ((exp - obs).obs ()) > diffCutoff:
+                    getReport (values, concept, exp, obs, title = sample, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
+                               outputPath = os.path.join (outputReport, f"report_{sample}.png"))
 else:
     if args.mtx.lower ().endswith ("tsv"):
         with open (args.mtx) as f:
@@ -190,8 +192,9 @@ else:
                     else:
                         memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{feature}.tsv"), sep = "\t")
                     if generatePlots:
-                        getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                                   outputPath = os.path.join (outputReport, f"report_{feature}.png"))
+                        if max ((exp - obs).obs ()) > diffCutoff:
+                            getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
+                                       outputPath = os.path.join (outputReport, f"report_{feature}.png"))
     if args.mtx.lower ().endswith ("h5ad"):
         for feature in features:
             values = adata[feature].to_df ().loc[feature].astype (float).round (5)
@@ -225,8 +228,9 @@ else:
                 else:
                     memberships.round (3).to_csv (os.path.join (args.output, "fuzzy_values", f"fuzzyValues_{feature}.tsv"), sep = "\t")
                 if generatePlots:
-                    getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                               outputPath = os.path.join (args.output, "reports", f"report_{feature}.png"))
+                    if max ((exp - obs).obs ()) > diffCutoff:
+                        getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
+                                   outputPath = os.path.join (args.output, "reports", f"report_{feature}.png"))
 if onlyAverage:
     averageFV = pd.DataFrame.from_dict (averageFV, orient = "index")
     averageFV.to_csv (os.path.join (outputFV, "average_fuzzy_values.tsv"), sep = "\t")

@@ -137,7 +137,8 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                 minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                 useFit = False, useOptimize = False, bwFct = 1,
                 refConcept = list (), consValue = list (),
-                widthFct = 1, slopeFct = 0.5, centerIdx = 0):
+                widthFct = 1, slopeFct = 0.5, centerIdx = 0,
+                globalExp = list ()):
     masked = values.replace (labels, np.nan).dropna (); info = basicInfo.copy ()
     typeFS_dict = {2: "Gaussian", 4: "trapezoidal"}
     if masked.empty:
@@ -145,7 +146,8 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
             info["MIN-NOISE"] = round (minLevelCons, 3) if np.isfinite (minLevelCons) else "-Infinity"
             info["MAX-NOISE"] = round (maxLevelCons, 3) if np.isfinite (maxLevelCons) else "Infinity"
             for idx in range (numFS):
-                info[renameFS[idx]] = [refConcept[idx], typeFS_dict[len (refConcept[idx])], colorList[idx], 0]
+                info[renameFS[idx]] = [refConcept[idx], typeFS_dict[len (refConcept[idx])],
+                                       colorList[idx], globalExp[idx]]
         else:
             info["number_fuzzy_sets"] = 0
     else:
@@ -156,11 +158,16 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
         info["MAX-NOISE"] = round (maxLevel, 3) if np.isfinite (maxLevel) else "Infinity"
         if method == "constraint":
             if consType == "fixed":
-                percent = getPercentage (values, refConcept, labels = labels, minLevel = minLevel, maxLevel = maxLevel)
                 for idx in range (numFS):
-                    info[renameFS[idx]] = [refConcept[idx], typeFS_dict[len (refConcept[idx])], colorList[idx], round (percent[idx], 5)]
+                    try:
+                        info[renameFS[idx]] = [refConcept[idx], typeFS_dict[len (refConcept[idx])],
+                                               colorList[idx], round (globalExp[idx], 5)]
+                    except IndexError:
+                        info[renameFS[idx]] = [refConcept[idx], typeFS_dict[len (refConcept[idx])],
+                                               colorList[idx], 0]
             elif consType == "proportion" and not masked.empty:
-                percentiles = masked.quantile (consValue).round (3); std = masked.std (); typeFS = list (); concept = list ()
+                percentiles = masked.quantile (consValue).round (3); std = masked.std ()
+                typeFS = list (); concept = list ()
                 for idx in range (numFS):
                     typeFS.append (typeFS_dict[len (refConcept[idx])])
                     if typeFS[-1] == "trapezoidal":
@@ -181,7 +188,8 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                         if typeFS[-1] == "trapezoidal":
                             concept.append ([round (mu + sigma * z, 3) for z in refConcept[idx]])
                         else:
-                            concept.append ([round (mu + sigma * refConcept[idx][0], 3), round (refConcept[idx][1] * sigma, 3)])
+                            concept.append ([round (mu + sigma * refConcept[idx][0], 3),
+                                             round (refConcept[idx][1] * sigma, 3)])
                     concept = _adjustBorder (concept, masked.min (), masked.max ())
                     percent = getSubarea (mu, sigma, concept, minLevel = minLevel, maxLevel = maxLevel)
                     for idx in range (numFS):
@@ -193,13 +201,15 @@ def getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
         elif method == "default":
             mu, sigma = _fitMode (masked, bwFct = bwFct, useFit = useFit, useOptimize = useOptimize)
             if (not (np.isnan (mu) and np.isnan (sigma))) and sigma > 0:
-                coords = [mu + widthFct * (i + overlap) * sigma for i in np.linspace (-numFS, numFS, numFS + 1) for overlap in [-slopeFct, slopeFct]]
+                coords = [mu + widthFct * (i + overlap) * sigma for i in np.linspace (-numFS, numFS, numFS + 1)
+                          for overlap in [-slopeFct, slopeFct]]
                 concept = np.round ([coords[(2 * k - 2):(2 * k + 2)] for k in range (1, numFS + 1)], 3).tolist ()
                 concept[centerIdx] = [round (mu, 3), round (widthFct * sigma, 3)]
                 concept = _adjustBorder (concept, masked.min (), masked.max ())
                 percent = getSubarea (mu, sigma, concept, minLevel = minLevel, maxLevel = maxLevel)
                 for idx in range (numFS):
-                    info[renameFS[idx]] = [concept[idx], typeFS_dict[len (concept[idx])], colorList[idx], round (percent[idx], 5)]
+                    info[renameFS[idx]] = [concept[idx], typeFS_dict[len (concept[idx])],
+                                           colorList[idx], round (percent[idx], 5)]
             else:
                 info["number_fuzzy_sets"] = 0
         else:
