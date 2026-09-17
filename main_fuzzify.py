@@ -152,7 +152,7 @@ if direction == "sample":
             else:
                 memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{sample}.tsv"), sep = "\t")
             if generatePlots:
-                if max ((exp - obs).obs ()) > diffCutoff:
+                if max ((exp - obs).abs ()) > diffCutoff:
                     getReport (values, concept, exp, obs, title = sample, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
                                outputPath = os.path.join (outputReport, f"report_{sample}.png"))
 else:
@@ -192,7 +192,7 @@ else:
                     else:
                         memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{feature}.tsv"), sep = "\t")
                     if generatePlots:
-                        if max ((exp - obs).obs ()) > diffCutoff:
+                        if max ((exp - obs).abs ()) > diffCutoff:
                             getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
                                        outputPath = os.path.join (outputReport, f"report_{feature}.png"))
     if args.mtx.lower ().endswith ("h5ad"):
@@ -226,11 +226,11 @@ else:
                 if onlyAverage:
                     averageFV[feature] = memberships.mean (axis = 0).round (3)
                 else:
-                    memberships.round (3).to_csv (os.path.join (args.output, "fuzzy_values", f"fuzzyValues_{feature}.tsv"), sep = "\t")
+                    memberships.round (3).to_csv (os.path.join (outputFV, f"fuzzyValues_{feature}.tsv"), sep = "\t")
                 if generatePlots:
-                    if max ((exp - obs).obs ()) > diffCutoff:
+                    if max ((exp - obs).abs ()) > diffCutoff:
                         getReport (values, concept, exp, obs, title = feature, ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                                   outputPath = os.path.join (args.output, "reports", f"report_{feature}.png"))
+                                   outputPath = os.path.join (outputReport, f"report_{feature}.png"))
 if onlyAverage:
     averageFV = pd.DataFrame.from_dict (averageFV, orient = "index")
     averageFV.to_csv (os.path.join (outputFV, "average_fuzzy_values.tsv"), sep = "\t")
