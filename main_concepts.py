@@ -166,7 +166,7 @@ elif direction == "sample":
                                                   useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
                                                   refConcept = concept_cons, consValue = consValue,
                                                   widthFct = widthFct, slopeFct = slopeFct, centerIdx = centerIdx,
-                                                  globaleExp = percentage)
+                                                  globalExp = percentage)
     if args.mtx.lower ().endswith ("h5ad"):
         maxSplit = 2
         for sample in samples:
