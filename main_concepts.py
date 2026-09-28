@@ -132,7 +132,7 @@ if direction == "feature":
         with open (args.mtx) as f:
             _ = f.readline ()
             for feature in features:
-                values = pd.Series ([np.nan if x in ["", "NA"] else float (x) for x in f.readline ().strip ("\n").split ("\t")[1:]],
+                values = pd.Series ([np.nan if x in ["", "NA", "na"] else float (x) for x in f.readline ().strip ("\n").split ("\t")[1:]],
                                     index = samples).round (5)
                 detailedConcept[feature] = getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                                                        minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
@@ -155,12 +155,13 @@ elif direction == "sample":
         for sample in samples:
             if sample == samples[-1]:
                 with open (args.mtx) as f:
-                    values = pd.Series ([line.strip ("\n").split ("\t")[-1] for line in f.readlines ()[1:]], index = features)
+                    values = pd.Series ([line.strip ("\n").split ("\t")[-1] for line in f.readlines ()[1:]],
+                                        index = features).str.lower ()
             else:
                 with open (args.mtx) as f:
                     values = pd.Series ([line.strip ("\n").split ("\t", maxsplit = maxSplit)[-2] for line in f.readlines ()[1:]],
-                                        index = features)
-            values[values == ""] = np.nan; values = values.astype (float).round (5); maxSplit += 1
+                                        index = features).str.lower ()
+            values[(values == "") | (values == "na")] = "nan"; values = values.astype (float).round (5); maxSplit += 1
             detailedConcept[sample] = getConcept (values, method, consType, basicInfo, numFS, renameFS, labels,
                                                   minLevelCons, minLevelPct, maxLevelCons, maxLevelPct, colorList,
                                                   useFit = useFit, useOptimize = useOptimize, bwFct = bwFct,
