@@ -85,10 +85,9 @@ colorList = [colors[i] if len (colors[i]) == 7 and colors[i].startswith ("#") el
 colorList += list (filter (lambda x: not x in colorList, defaultColors))[len (colorList):numFS]
 
 if args.mtx.lower ().endswith ("tsv"):
-    with open (args.mtx) as f:
-        samples = f.readline ().strip ("\n").split ("\t")[1:]
-        features = [line.strip ("\n").split ("\t")[0] for line in f.readlines ()]
-    values = pd.read_csv (args.mtx, index_col = 0, sep = "\t").melt ()["value"].round (5)
+    values = pd.read_csv (args.mtx, index_col = 0, sep = "\t")
+    features = list (values.index); samples = list (values.columns)
+    values = values.melt ()["value"].round (5)
 elif args.mtx.lower ().endswith ("h5ad"):
     if direction == "feature":
         adata = sc.read_h5ad (args.mtx).T; features = list (adata.obs_names); samples = list (adata.var_names)
