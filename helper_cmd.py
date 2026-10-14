@@ -232,7 +232,8 @@ def parseConcept (concept):
 
 
 
-def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False, ignoreMaxNoise = False, scaleSum = True):
+def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False, ignoreMaxNoise = False, scaleSum = True,
+             trimDefault = False):
     if not concept:
         return pd.DataFrame (dtype = float), pd.Series (dtype = float), pd.Series (dtype = float), np.nan
     numFS = concept["number_fuzzy_sets"]; labels = concept.get ("label_values", list ())
@@ -240,12 +241,12 @@ def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False,
     maxLevel = np.inf if ignoreMaxNoise else concept.get ("MAX-NOISE", np.inf)
     if numFS == 0:
         return pd.DataFrame (dtype = float), pd.Series (dtype = float), pd.Series (dtype = float), np.nan
-    masked = rawValues.replace (labels, np.nan).to_numpy ()
+    masked = rawValues.replace (labels, np.nan).to_numpy (); allSets = list ()
     memberships = pd.DataFrame (index = rawValues.index, dtype = float); expectation = pd.Series (dtype = float)
     for key in concept.keys ():
         if key in ["number_fuzzy_sets", "label_values", "MIN-NOISE", "MAX-NOISE"]:
             continue
-        params, typeFS, _, exp = concept[key]; expectation[key] = exp
+        allSets.append (key); params, typeFS, _, exp = concept[key]; expectation[key] = exp
         if typeFS == "trapezoidal":
             if params[0] == params[1] and params[1] == params[2] and params[2] == params[3]:
                 memberships[key] = 0
@@ -285,6 +286,11 @@ def fuzzify (rawValues, concept, renameLabels = dict (), ignoreMinNoise = False,
                 memberships[key] = platform + (1 - platform) * np.exp (-(masked - params[0]) ** 2 / (2 * params[1] ** 2))
         else:
             memberships[key] = 0
+    if trimDefault:
+        centerIdx = numFS // 2; allTypes = np.array ([concept[key][1] for key in allSets])
+        if centerIdx > 1 and allTypes[centerIdx] == "Gaussian" and (allTypes == "Gaussian").sum () == 1:
+            leftFS = allSets[centerIdx - 2]; centerFS = allSets[centerIdx]; rightFS = allSets[centerIdx + 2]
+            memberships.loc[(memberships[leftFS] != 0) | (memberships[rightFS] != 0), centerFS] = 0
     masked = pd.Series (masked, index = rawValues.index)
     if np.isfinite (maxLevel):
         outliers = (masked >= maxLevel); name = renameLabels.get ("MAX-NOISE", "MAX-NOISE")

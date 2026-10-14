@@ -37,7 +37,8 @@ const = {"-infinity": -np.inf, "-inf": -np.inf,
          "nan": np.nan, "na": np.nan, "zero": 0}
 defaultName = config.get ("key_default_concept", "DEFAULT"); direction = config.get ("fuzzify_per", "feature")
 noMinNoise = config.get ("ignore_MIN-NOISE", False); noMaxNoise = config.get ("ignore_MAX-NOISE", False)
-scaleSum = config.get ("force_sum_one", True); renameLabels = config.get ("rename_labels", dict ())
+scaleSum = config.get ("force_sum_one", True); trimDefault = config.get ("trim_default_fuzzification", False)
+renameLabels = config.get ("rename_labels", dict ())
 renameLabels = {const.get (val.lower ()): renameLabels[val] for val in renameLabels.keys () if isinstance (val, str)}
 if (noMinNoise and (not noMaxNoise)) or ((not noMinNoise) and noMaxNoise):
     renameLabels["MIN-NOISE"] = "NOISE"; renameLabels["MAX-NOISE"] = "NOISE"
@@ -143,7 +144,7 @@ if direction == "sample":
                 concept = parseConcept (concept); isFitted = True
         memberships, exp, obs, deviation = fuzzify (values, concept, renameLabels = renameLabels,
                                                     ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                                                    scaleSum = scaleSum)
+                                                    scaleSum = scaleSum, trimDefault = trimDefault)
         if generateEval:
             expectation[sample] = exp.round (5); observation[sample] = obs.round (5)
             summary[sample] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
@@ -183,7 +184,7 @@ else:
                     concept = default.copy (); isFitted = False
                 memberships, exp, obs, deviation = fuzzify (values, concept, renameLabels = renameLabels,
                                                             ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                                                            scaleSum = scaleSum)
+                                                            scaleSum = scaleSum, trimDefault = trimDefault)
                 if generateEval:
                     expectation[feature] = exp.round (5); observation[feature] = obs.round (5)
                     summary[feature] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
@@ -219,7 +220,7 @@ else:
                 concept = default.copy (); isFitted = False
             memberships, exp, obs, deviation = fuzzify (values, concept, renameLabels = renameLabels,
                                                         ignoreMinNoise = noMinNoise, ignoreMaxNoise = noMaxNoise,
-                                                        scaleSum = scaleSum)
+                                                        scaleSum = scaleSum, trimDefault = trimDefault)
             if generateEval:
                 expectation[feature] = exp.round (5); observation[feature] = obs.round (5)
                 summary[feature] = {"deviation": round (deviation, 5), "individual_concept": isFitted}
