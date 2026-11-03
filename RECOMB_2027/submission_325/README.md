@@ -1,4 +1,4 @@
-# Feature Selection Pipeline
+# FuzzSys: Fuzzy Categorization and Selection for Atlas Analysis
 
 The pipeline uses miRNA-seq and RNA-seq data downloaded from The Cancer Genome Atlas Project (TCGA). Our main purpose is to demonstrate the different methods of applying fuzzification on expression data. It not only models various value distributions based on fitted Gaussian distribution and quantitative classifiation, but also provides inputs for down-stream analyses such as data-based feature selection.
 
