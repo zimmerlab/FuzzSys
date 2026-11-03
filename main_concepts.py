@@ -57,7 +57,7 @@ if method == "constraint":
             else:
                 raise ValueError
         consValue = sorted (consValue); useFit = (consType == "z-score"); useOptimize = params.get ("use_scipy_optimization", False)
-        percentage = getPercentage (np.linspace (0, 1, 1001), concept_cons, minLevel = -np.inf, maxLevel = np.inf)
+        percentage = getPercentage (pd.Series (np.linspace (0, 1, 1001)), concept_cons, minLevel = -np.inf, maxLevel = np.inf)
     else:
         raise ValueError
     bwFct = 1; widthFct = 1; slopeFct = 0.5; centerIdx = 0
