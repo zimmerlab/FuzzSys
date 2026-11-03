@@ -1,0 +1,11 @@
+{
+    "numerator_label": "tumour",
+    "denominator_label": "normal",
+    "index_separator": "__",
+    "series_separator": "*",
+    "expression_fuzzy_sets": ["NO_EXP", "NOISE", "LOW", "low", "MEDIUM", "high", "HIGH"],
+    "log2FC_fuzzy_sets": ["NA", "-INF", "--", "-", "o", "+", "++", "+INF"],
+    "metadata_index_column": "sample",
+    "metadata_cluster_column": "context",
+    "flow_membership_cutoff": 0.75
+}
