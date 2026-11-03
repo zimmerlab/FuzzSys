@@ -1,0 +1,43 @@
+{
+    "value_type": "z-score",
+    "number_fuzzy_sets": 3,
+    "label_values": [
+        "-Infinity"
+    ],
+    "fit_Gaussian_curve": true,
+    "use_scipy_optimization": true,
+    "band_width_factor": 0.75,
+    "LOW": [
+        [
+            -2.5,
+            -2.5,
+            -1.5,
+            -0.5
+        ],
+        "trapezoidal",
+        "#4682B4",
+        0.15866
+    ],
+    "MID": [
+        [
+            -1.5,
+            -0.5,
+            0.5,
+            1.5
+        ],
+        "trapezoidal",
+        "#000000",
+        0.68269
+    ],
+    "HIGH": [
+        [
+            0.5,
+            1.5,
+            2.5,
+            2.5
+        ],
+        "trapezoidal",
+        "#B22222",
+        0.15866
+    ]
+}
