@@ -651,22 +651,16 @@ def main ():
                                   outfile = "./visualizations/F2b_FlowSets_RNA")
         if figureIndex == 3:
             if suffix == "a" or suffix == "":
-                markers = pd.read_csv ("./miRNA/results/raw_counts/data_marker_features.tsv", index_col = None, sep = "\t")
-                plotScatter ("./miRNA/", markers, allClusters,  outputPath = "./visualizations/F3a_miRNA_markers.png")
-                markers = pd.read_csv ("./RNA/results/raw_counts/data_marker_features.tsv", index_col = None, sep = "\t")
-                plotScatter ("./RNA/", markers, allClusters, outputPath = "./visualizations/F3b_RNA_markers.png")
-        if figureIndex == 4:
-            if suffix == "a" or suffix == "":
                 plotFoldChange ("./miRNA/results/", "./miRNA/data/raw_counts/paired_log2FC.tsv", miRNA_cluster,
-                                outputPath = "./visualizations/F4a_miRNA_raw_comparison.png")
+                                outputPath = "./visualizations/F3a_miRNA_raw_comparison.png")
             if suffix == "b" or suffix == "":
                 plotFoldChange ("./RNA/results/", "./RNA/data/raw_counts/paired_log2FC.tsv", RNA_cluster,
-                                outputPath = "./visualizations/F4b_RNA_raw_comparison.png")
-        if figureIndex == 5:
+                                outputPath = "./visualizations/F3b_RNA_raw_comparison.png")
+        if figureIndex == 4:
             if suffix == "a" or suffix == "":
-                plotRidgeline ("hsa-mir-221", "./miRNA/", outputPath = "./visualizations/F5a_ridgeline_hsa-mir-221.png")
+                plotRidgeline ("hsa-mir-221", "./miRNA/", outputPath = "./visualizations/F4a_ridgeline_hsa-mir-221.png")
             if suffix == "b" or suffix == "":
-                plotRidgeline ("KIT", "./RNA/", outputPath = "./visualizations/F5b_ridgeline_KIT.png")
+                plotRidgeline ("KIT", "./RNA/", outputPath = "./visualizations/F4b_ridgeline_KIT.png")
     elif prefix == "A":
         if figureIndex == 1:
             if suffix == "a" or suffix == "":
@@ -719,42 +713,28 @@ def main ():
                 plotSampleMu ("./RNA/FV_raw_log2FC/concepts_detailed.json", RNA_cluster, "RNA raw log2 fold change",
                               outputPath = "./visualizations/A4d_RNA_raw_log2FC_fitted.png")
         if figureIndex == 5:
-            if suffix == "a" or suffix == "":
-                plotFitFlowFV ("./miRNA/results/", "DOWN", "steelblue", outputPath = "./visualizations/A5a_miRNA_DOWN_comparison.png")
-            if suffix == "b" or suffix == "":
-                plotFitFlowFV ("./miRNA/results/", "UP", "firebrick", outputPath = "./visualizations/A5b_miRNA_UP_comparison.png")
-            if suffix == "c" or suffix == "":
-                plotFitFlowFV ("./RNA/results/", "DOWN", "steelblue", outputPath = "./visualizations/A5c_RNA_DOWN_comparison.png")
-            if suffix == "d" or suffix == "":
-                plotFitFlowFV ("./RNA/results/", "UP", "firebrick", outputPath = "./visualizations/A5d_RNA_UP_comparison.png")
+            markers = pd.read_csv ("./miRNA/results/raw_counts/data_marker_features.tsv", index_col = None, sep = "\t")
+            plotScatter ("./miRNA/", markers, allClusters,  outputPath = "./visualizations/A5_miRNA_markers.png")
         if figureIndex == 6:
-            suffixList = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-            for i in range (len (allClusters)):
-                if suffix == suffixList[i] or suffix == "":
-                    subprocess.call (["Rscript", "venn_visualization.R",
-                                      "./miRNA/results/raw_counts/data_cluster-specific_features.tsv",
-                                      "./miRNA/results/norm_counts/data_cluster-specific_features.tsv",
-                                      "./miRNA/results/DESeq2_cluster-specific_features.tsv",
-                                      allClusters[i], "DOWN",
-                                      f"./visualizations/A6{suffixList[i]}_{allClusters[i]}_DOWN"])
+            markers = pd.read_csv ("./RNA/results/raw_counts/data_marker_features.tsv", index_col = None, sep = "\t")
+            plotScatter ("./RNA/", markers, allClusters,  outputPath = "./visualizations/A6_RNA_markers.png")
         if figureIndex == 7:
-            suffixList = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-            for i in range (len (allClusters)):
-                if suffix == suffixList[i] or suffix == "":
-                    subprocess.call (["Rscript", "venn_visualization.R",
-                                      "./miRNA/results/raw_counts/data_cluster-specific_features.tsv",
-                                      "./miRNA/results/norm_counts/data_cluster-specific_features.tsv",
-                                      "./miRNA/results/DESeq2_cluster-specific_features.tsv",
-                                      allClusters[i], "UP",
-                                      f"./visualizations/A7{suffixList[i]}_{allClusters[i]}_UP"])
+            if suffix == "a" or suffix == "":
+                plotFitFlowFV ("./miRNA/results/", "DOWN", "steelblue", outputPath = "./visualizations/A7a_miRNA_DOWN_comparison.png")
+            if suffix == "b" or suffix == "":
+                plotFitFlowFV ("./miRNA/results/", "UP", "firebrick", outputPath = "./visualizations/A7b_miRNA_UP_comparison.png")
+            if suffix == "c" or suffix == "":
+                plotFitFlowFV ("./RNA/results/", "DOWN", "steelblue", outputPath = "./visualizations/A7c_RNA_DOWN_comparison.png")
+            if suffix == "d" or suffix == "":
+                plotFitFlowFV ("./RNA/results/", "UP", "firebrick", outputPath = "./visualizations/A7d_RNA_UP_comparison.png")
         if figureIndex == 8:
             suffixList = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
             for i in range (len (allClusters)):
                 if suffix == suffixList[i] or suffix == "":
                     subprocess.call (["Rscript", "venn_visualization.R",
-                                      "./RNA/results/raw_counts/data_cluster-specific_features.tsv",
-                                      "./RNA/results/norm_counts/data_cluster-specific_features.tsv",
-                                      "./RNA/results/DESeq2_cluster-specific_features.tsv",
+                                      "./miRNA/results/raw_counts/data_cluster-specific_features.tsv",
+                                      "./miRNA/results/norm_counts/data_cluster-specific_features.tsv",
+                                      "./miRNA/results/DESeq2_cluster-specific_features.tsv",
                                       allClusters[i], "DOWN",
                                       f"./visualizations/A8{suffixList[i]}_{allClusters[i]}_DOWN"])
         if figureIndex == 9:
@@ -762,20 +742,40 @@ def main ():
             for i in range (len (allClusters)):
                 if suffix == suffixList[i] or suffix == "":
                     subprocess.call (["Rscript", "venn_visualization.R",
+                                      "./miRNA/results/raw_counts/data_cluster-specific_features.tsv",
+                                      "./miRNA/results/norm_counts/data_cluster-specific_features.tsv",
+                                      "./miRNA/results/DESeq2_cluster-specific_features.tsv",
+                                      allClusters[i], "UP",
+                                      f"./visualizations/A9{suffixList[i]}_{allClusters[i]}_UP"])
+        if figureIndex == 10:
+            suffixList = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+            for i in range (len (allClusters)):
+                if suffix == suffixList[i] or suffix == "":
+                    subprocess.call (["Rscript", "venn_visualization.R",
+                                      "./RNA/results/raw_counts/data_cluster-specific_features.tsv",
+                                      "./RNA/results/norm_counts/data_cluster-specific_features.tsv",
+                                      "./RNA/results/DESeq2_cluster-specific_features.tsv",
+                                      allClusters[i], "DOWN",
+                                      f"./visualizations/A10{suffixList[i]}_{allClusters[i]}_DOWN"])
+        if figureIndex == 11:
+            suffixList = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+            for i in range (len (allClusters)):
+                if suffix == suffixList[i] or suffix == "":
+                    subprocess.call (["Rscript", "venn_visualization.R",
                                       "./RNA/results/raw_counts/data_cluster-specific_features.tsv",
                                       "./RNA/results/norm_counts/data_cluster-specific_features.tsv",
                                       "./RNA/results/DESeq2_cluster-specific_features.tsv",
                                       allClusters[i], "UP",
-                                      f"./visualizations/A9{suffixList[i]}_{allClusters[i]}_UP"])
-        if figureIndex == 10:
+                                      f"./visualizations/A11{suffixList[i]}_{allClusters[i]}_UP"])
+        if figureIndex == 12:
             if suffix == "a" or suffix == "":
                 regFA.plot_flows (genes = ["hsa-mir-221__THCA"], specialColors = {f: "firebrick" for f in flows["up"]},
                                   classFontsize = 9, seriesFontsize = 10, figsize = (10, 6),
-                                  outfile = "./visualizations/A10a_hsa-mir-221")
+                                  outfile = "./visualizations/A12a_hsa-mir-221")
             if suffix == "b" or suffix == "":
                 tarFA.plot_flows (genes = ["KIT__THCA"], specialColors = {f: "steelblue" for f in flows["down"]},
                                   classFontsize = 9, seriesFontsize = 10, figsize = (10, 6),
-                                  outfile = "./visualizations/A10b_KIT")
+                                  outfile = "./visualizations/A12b_KIT")
     else:
         raise ValueError
 
